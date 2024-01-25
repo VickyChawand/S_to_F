@@ -17,8 +17,9 @@ export const ChatContextProvider= ({children, user}) =>{
     const [newMessage, setNewMessage] = useState(null)
     const [socket, setSocket] = useState(null)
     const [onlineUsers, setOnlineUsers] = useState([])
+    const [notification, setNotification] = useState([])
 
-    console.log('onlineUsers', onlineUsers)
+    console.log('notification', notification)
 
     useEffect(() => {
         const newSocket = io('http://localhost:3000');
@@ -56,8 +57,18 @@ export const ChatContextProvider= ({children, user}) =>{
             setMessages((prev) => [...prev, res ])
         })
 
+        socket.on('getNotification', (res) => {
+            const isChatOpen = currentChat?.members.some(id => id === res.senderId)
+            if(isChatOpen){
+                setNotification(prev => [{...res, isRead: true}, ...prev ])
+            }else{
+                setNotification(prev => [res, ...prev])
+            }
+        })
+
         return () => {
             socket.off('getMessage')
+            socket.off('getNotification')
         }
     }, [socket, currentChat])
     
@@ -174,6 +185,7 @@ export const ChatContextProvider= ({children, user}) =>{
                 messagesError,
                 sendTextMessage,
                 onlineUsers,
+                notification,
             }}>
         {children}
     </ChatContext.Provider>
